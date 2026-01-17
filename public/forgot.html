@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reset Password - NeoFi</title>
+    <script src="/js/admin-toast.js"></script>
+    <style>
+        :root {
+            --primary: #0984e3;
+            --dark: #2d3436;
+            --light: #dfe6e9;
+            --bg: #f0f2f5;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: var(--bg);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            color: var(--dark);
+        }
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        h2 { margin-top: 0; color: var(--dark); }
+        .input-group { margin-bottom: 20px; text-align: left; }
+        .input-group label { font-size: 0.85rem; font-weight: 600; color: #636e72; display: block; margin-bottom: 5px; }
+        .form-control {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            box-sizing: border-box;
+            font-size: 1rem;
+        }
+        .btn {
+            width: 100%;
+            padding: 12px;
+            background: var(--primary);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.2s;
+        }
+        .btn:hover { background: #0773c5; }
+        .btn-secondary {
+            background: #b2bec3;
+            margin-top: 10px;
+        }
+        .btn-secondary:hover { background: #636e72; }
+        .error { color: #e74c3c; font-size: 0.9rem; margin-top: 10px; display: none; }
+        .hidden { display: none; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <!-- Step 1: Verification -->
+        <div id="step-verify">
+            <h2>Security Check</h2>
+            <p style="color: #636e72; font-size: 0.9rem; margin-bottom: 25px;">Please answer your security question to reset your credentials.</p>
+            
+            <div class="input-group">
+                <label>Security Question</label>
+                <div id="security-question" style="padding: 12px; background: #f8f9fa; border-radius: 6px; border: 1px solid #eee; font-weight: 500;">
+                    Loading...
+                </div>
+            </div>
+
+            <div class="input-group">
+                <label for="security-answer">Your Answer</label>
+                <input type="text" id="security-answer" class="form-control" placeholder="Enter answer">
+            </div>
+
+            <button onclick="verifyAnswer()" class="btn">Verify Identity</button>
+            <button onclick="window.location.href='/admin.html'" class="btn btn-secondary">Cancel</button>
+            <div id="verify-error" class="error"></div>
+        </div>
+
+        <!-- Step 2: Reset Form -->
+        <div id="step-reset" class="hidden">
+            <h2>Reset Credentials</h2>
+            <p style="color: #636e72; font-size: 0.9rem; margin-bottom: 20px;">Identity Verified. Update your login details.</p>
+
+            <div class="input-group">
+                <label>New Username</label>
+                <input type="text" id="new-username" class="form-control" placeholder="New Username">
+            </div>
+            
+            <div class="input-group">
+                <label>New Password</label>
+                <input type="password" id="new-password" class="form-control" placeholder="New Password">
+            </div>
+
+            <div class="input-group">
+                <label>New Security Question</label>
+                <select id="new-question" class="form-control">
+                    <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+                    <option value="What is the name of your first pet?">What is the name of your first pet?</option>
+                    <option value="What is your favorite movie?">What is your favorite movie?</option>
+                    <option value="What is your favorite book?">What is your favorite book?</option>
+                </select>
+            </div>
+
+            <div class="input-group">
+                <label>New Security Answer</label>
+                <input type="text" id="new-answer" class="form-control" placeholder="New Answer">
+            </div>
+
+            <button onclick="submitReset()" class="btn">Update Credentials</button>
+            <div id="reset-error" class="error"></div>
+        </div>
+    </div>
+
+    <script>
+        let resetToken = null;
+
+        // Load Security Question on Page Load
+        window.onload = async () => {
+            try {
+                const res = await fetch('/api/auth/security-question');
+                const data = await res.json();
+                
+                if (data.hasQuestion) {
+                    document.getElementById('security-question').textContent = data.question;
+                } else {
+                    document.getElementById('security-question').textContent = "Error: No question configured.";
+                    document.querySelector('#step-verify button').disabled = true;
+                }
+            } catch (e) {
+                document.getElementById('security-question').textContent = "Connection Error";
+            }
+        };
+
+        async function verifyAnswer() {
+            const answer = document.getElementById('security-answer').value;
+            const errorEl = document.getElementById('verify-error');
+            
+            if (!answer) {
+                errorEl.textContent = "Please enter an answer";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/verify-security', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ answer })
+                });
+                
+                const data = await res.json();
+                
+                if (data.success) {
+                    resetToken = data.token;
+                    document.getElementById('step-verify').classList.add('hidden');
+                    document.getElementById('step-reset').classList.remove('hidden');
+                } else {
+                    errorEl.textContent = "Wrong Answer. Please try again.";
+                    errorEl.style.display = 'block';
+                }
+            } catch (e) {
+                errorEl.textContent = "Verification Failed";
+                errorEl.style.display = 'block';
+            }
+        }
+
+        async function submitReset() {
+            const username = document.getElementById('new-username').value;
+            const password = document.getElementById('new-password').value;
+            const security_question = document.getElementById('new-question').value;
+            const security_answer = document.getElementById('new-answer').value;
+            const errorEl = document.getElementById('reset-error');
+
+            if (!username || !password || !security_answer) {
+                errorEl.textContent = "All fields are required";
+                errorEl.style.display = 'block';
+                return;
+            }
+
+            try {
+                const res = await fetch('/api/auth/reset-credentials', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({ 
+                        token: resetToken,
+                        username, 
+                        password,
+                        security_question,
+                        security_answer
+                    })
+                });
+
+                if (res.ok) {
+                    alert("Credentials updated successfully! Redirecting to login...");
+                    setTimeout(() => {
+                        window.location.href = '/admin.html';
+                    }, 2000);
+                } else {
+                    const data = await res.json();
+                    errorEl.textContent = data.error || "Reset Failed";
+                    errorEl.style.display = 'block';
+                }
+            } catch (e) {
+                errorEl.textContent = "Connection Error";
+                errorEl.style.display = 'block';
+            }
+        }
+    </script>
+</body>
+</html>

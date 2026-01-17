@@ -1,0 +1,21 @@
+[Unit]
+Description=Piso Wifi Node.js Server
+After=network.target
+
+[Service]
+Type=simple
+User=root
+WorkingDirectory={{PROJECT_DIR}}
+ExecStartPre=/bin/sleep 5
+ExecStart={{NODE_BIN}} {{PROJECT_DIR}}/src/app.js
+Restart=always
+RestartSec=10
+Environment=NODE_ENV=production
+Environment="PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+LimitNOFILE=65536
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=pisowifi
+
+[Install]
+WantedBy=multi-user.target

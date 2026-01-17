@@ -1,0 +1,1818 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>NeoFi Client</title>
+    <style>
+        :root {
+            --primary: #3498db; /* Blue */
+            --success: #2ecc71; /* Green */
+            --danger: #e74c3c; /* Red */
+            --bg: #f5f6fa;
+            --text: #2d3436;
+            --text-muted: #636e72;
+            --white: #ffffff;
+            --shadow: 0 4px 6px rgba(0,0,0,0.1);
+            --radius: 12px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        body {
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-start;
+            align-items: center;
+            padding: 12px;
+        }
+
+        .developer-footer {
+            margin-top: 10px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            opacity: 0.8;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 360px;
+            background: var(--white);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            overflow: hidden;
+            text-align: center;
+            padding-bottom: 14px;
+        }
+
+        .portal-banner {
+            width: 100%;
+            height: 190px;
+            position: relative;
+            overflow: hidden;
+            display: block;
+            background: linear-gradient(135deg, rgba(52, 152, 219, 0.35) 0%, rgba(46, 204, 113, 0.35) 100%);
+            border-bottom: 1px solid rgba(0,0,0,0.06);
+        }
+
+        .portal-banner::after {
+            content: "";
+            position: absolute;
+            inset: 0;
+            background: linear-gradient(180deg, rgba(0,0,0,0.00) 0%, rgba(0,0,0,0.22) 100%);
+            pointer-events: none;
+            z-index: 2;
+        }
+
+        .portal-banner-media {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .portal-banner-media img {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transform: scale(1.03);
+            transition: opacity 900ms ease, transform 4500ms ease;
+            will-change: opacity, transform;
+        }
+
+        .portal-banner-media img.active {
+            opacity: 1;
+            transform: scale(1.00);
+        }
+
+        .portal-status-pill {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            width: 38px;
+            height: 38px;
+            border-radius: 999px;
+            display: grid;
+            place-items: center;
+            background: rgba(255, 255, 255, 0.66);
+            border: 1px solid rgba(255, 255, 255, 0.55);
+            backdrop-filter: blur(10px);
+            z-index: 3;
+        }
+
+        .portal-status-pill svg {
+            width: 36px;
+            height: 36px;
+            display: none;
+        }
+
+        .portal-status-pill.connected {
+            color: var(--success);
+            box-shadow: 0 0 0 3px rgba(46, 204, 113, 0.18), 0 0 18px rgba(46, 204, 113, 0.55);
+        }
+
+        .portal-status-pill.disconnected {
+            color: var(--text-muted);
+            box-shadow: 0 0 0 3px rgba(99, 110, 114, 0.18), 0 0 18px rgba(99, 110, 114, 0.45);
+        }
+
+        .portal-status-pill.paused {
+            color: #f39c12;
+            box-shadow: 0 0 0 3px rgba(243, 156, 18, 0.18), 0 0 18px rgba(243, 156, 18, 0.55);
+        }
+
+        .portal-status-pill.connected #status-icon-connected,
+        .portal-status-pill.disconnected #status-icon-disconnected,
+        .portal-status-pill.paused #status-icon-paused {
+            display: block;
+            filter: drop-shadow(0 0 10px currentColor);
+        }
+
+        /* Header Status */
+        .status-header {
+            padding: 6px 16px 6px;
+            background: #ffffff;
+            border-bottom: 1px solid #f1f2f6;
+        }
+        
+        .status-icon {
+            width: 42px;
+            height: 42px;
+            fill: var(--success);
+            margin-top: 0;
+            margin-bottom: 4px;
+        }
+
+        .status-text {
+            font-size: 1.12rem;
+            font-weight: 700;
+            color: var(--text-muted);
+            margin-top: 0;
+        }
+
+        .status-text.disconnected {
+            color: var(--text-muted);
+        }
+
+        .status-text.connected {
+            color: var(--success);
+        }
+
+        .status-text.paused {
+            color: #f39c12;
+        }
+
+        /* Info Row */
+        .info-row {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            font-size: 0.85rem;
+            color: var(--primary);
+            margin-top: 5px;
+            font-weight: 500;
+        }
+
+        .info-row-compact {
+            justify-content: center;
+            gap: 12px;
+            margin: 6px 0 0;
+            font-size: 0.78rem;
+            color: var(--text-muted);
+            flex-wrap: wrap;
+        }
+
+        /* Credit & Timer */
+        .main-display {
+            padding: 14px 16px 16px;
+        }
+
+        .credit-label {
+            font-size: 0.9rem;
+            color: var(--primary);
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .timer-label {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            margin-top: 15px;
+            text-transform: uppercase;
+        }
+
+        .timer-value {
+            font-size: clamp(2.7rem, 10.5vw, 4.0rem);
+            font-weight: 700;
+            color: var(--primary);
+            font-variant-numeric: tabular-nums;
+            line-height: 1.1;
+            margin: 5px 0;
+            white-space: nowrap;
+        }
+
+        .timer-value.long {
+            font-size: clamp(2.1rem, 8.5vw, 3.0rem);
+        }
+
+        .code-display {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #e67e22; /* Orange for code */
+            margin-top: 5px;
+        }
+
+        /* Buttons */
+        .actions {
+            padding: 0 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 30px; /* Pill shape */
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.1s, opacity 0.2s;
+            color: white;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+
+        .btn:active {
+            transform: scale(0.98);
+        }
+
+        .btn-insert {
+            background: var(--success);
+        }
+
+        .btn-pause {
+            background: var(--danger);
+        }
+
+        .btn-rates {
+            background: var(--primary);
+        }
+
+        .btn-resume {
+            background: #9b59b6; /* Purple */
+        }
+
+        /* Voucher Input */
+        .voucher-section {
+            padding: 14px 16px;
+            margin-top: 10px;
+            display: flex;
+            gap: 8px;
+            align-items: stretch;
+        }
+
+        .voucher-input {
+            flex: 1 1 0%;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px; /* Slightly rounded */
+            font-size: 0.95rem;
+            outline: none;
+            background: #f8f9fa;
+        }
+        
+        .voucher-input:focus {
+            border-color: var(--primary);
+            background: white;
+        }
+
+        .btn-submit {
+            background: var(--primary);
+            color: white;
+            border: none;
+            flex: 0 0 96px;
+            padding: 0;
+            border-radius: 8px; /* Match input */
+            font-weight: 600;
+            cursor: pointer;
+            white-space: nowrap;
+        }
+
+        .coin-countdown {
+            margin: 10px 0 0;
+        }
+
+        .coin-countdown-bar {
+            width: 100%;
+            height: 10px;
+            background: #e9ecef;
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 1px 2px rgba(0,0,0,0.08);
+        }
+
+        .coin-countdown-fill {
+            height: 100%;
+            width: 100%;
+            background: var(--primary);
+            transition: width 0.2s linear;
+        }
+
+        .coin-countdown-text {
+            margin-top: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        /* Modals */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: rgba(0,0,0,0.5);
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+
+        .modal.show {
+            opacity: 1;
+        }
+
+        .modal-content {
+            background: white;
+            padding: 25px;
+            border-radius: var(--radius);
+            width: 90%;
+            max-width: 320px;
+            text-align: center;
+            transform: scale(0.95);
+            transition: transform 0.2s;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        /* Rates List in Modal */
+        .rate-list {
+            max-height: 300px;
+            overflow-y: auto;
+            text-align: left;
+        }
+
+        .rate-item {
+            display: flex;
+            justify-content: space-between;
+            padding: 10px;
+            border-bottom: 1px solid #eee;
+        }
+
+        .rate-price { font-weight: 700; color: var(--success); }
+        .rate-time { color: var(--text-muted); }
+
+        /* Toast Notification */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            z-index: 10000;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            pointer-events: none;
+            width: 90%;
+            max-width: 350px;
+        }
+
+        .toast {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 12px;
+            padding: 12px 16px;
+            box-shadow: 0 8px 30px rgba(0, 0, 0, 0.12);
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            animation: slideInDown 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: auto;
+            border: 1px solid rgba(0,0,0,0.05);
+        }
+        
+        .toast.error { border-left: 4px solid var(--danger); }
+        .toast.success { border-left: 4px solid var(--success); }
+        .toast.warning { border-left: 4px solid #f39c12; }
+
+        .toast-icon {
+            font-size: 1.2rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .toast-message {
+            font-size: 0.95rem;
+            font-weight: 600;
+            color: #2d3436;
+            line-height: 1.4;
+        }
+
+        .toast.hiding {
+            animation: slideOutUp 0.3s cubic-bezier(0.6, -0.28, 0.735, 0.045) forwards;
+        }
+
+        @keyframes slideInDown {
+            from { transform: translateY(-20px) scale(0.9); opacity: 0; }
+            to { transform: translateY(0) scale(1); opacity: 1; }
+        }
+
+        @keyframes slideOutUp {
+            from { transform: translateY(0) scale(1); opacity: 1; }
+            to { transform: translateY(-20px) scale(0.9); opacity: 0; }
+        }
+        /* Chat Widget */
+        .chat-widget-btn {
+            position: fixed;
+            bottom: 20px;
+            right: 20px;
+            width: 50px;
+            height: 50px;
+            background: var(--primary);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.2);
+            cursor: pointer;
+            z-index: 1000;
+            display: none;
+            transition: transform 0.2s;
+        }
+        .chat-widget-btn:hover {
+            transform: scale(1.1);
+        }
+        .chat-widget-btn svg {
+            width: 24px;
+            height: 24px;
+            fill: currentColor;
+        }
+        .chat-widget-box {
+            position: fixed;
+            bottom: 80px;
+            right: 20px;
+            width: 300px;
+            height: 400px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 5px 20px rgba(0,0,0,0.2);
+            display: flex;
+            flex-direction: column;
+            z-index: 1000;
+            overflow: hidden;
+            border: 1px solid #eee;
+            /* Animation */
+            opacity: 0;
+            visibility: hidden;
+            transform: translateY(20px) scale(0.95);
+            transition: all 0.3s cubic-bezier(0.19, 1, 0.22, 1);
+        }
+        .chat-widget-box.open {
+            opacity: 1;
+            visibility: visible;
+            transform: translateY(0) scale(1);
+        }
+        .chat-widget-header {
+            background: var(--primary);
+            color: white;
+            padding: 12px;
+            font-weight: 600;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .chat-widget-header .close-btn {
+            cursor: pointer;
+            font-size: 1.2rem;
+        }
+        .chat-widget-messages {
+            flex: 1;
+            padding: 10px;
+            overflow-y: auto;
+            background: #f8f9fa;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+        .chat-widget-input {
+            padding: 10px;
+            border-top: 1px solid #eee;
+            display: flex;
+            gap: 5px;
+            background: white;
+        }
+        .chat-widget-input input {
+            flex: 1;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            outline: none;
+        }
+        .chat-widget-input button {
+            background: var(--primary);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        @keyframes msgSlideUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .chat-msg {
+            max-width: 80%;
+            padding: 8px 12px;
+            border-radius: 12px;
+            font-size: 0.9rem;
+            word-wrap: break-word;
+            animation: msgSlideUp 0.3s ease-out forwards;
+        }
+        .chat-msg.sent {
+            align-self: flex-end;
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 2px;
+        }
+        .chat-msg.received {
+            align-self: flex-start;
+            background: #e9ecef;
+            color: #333;
+            border-bottom-left-radius: 2px;
+        }
+        .chat-unread-badge {
+            position: absolute;
+            top: -5px;
+            right: -5px;
+            background: var(--danger);
+            color: white;
+            font-size: 0.7rem;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            display: none;
+        }
+        /* Device Selection Modal */
+        .device-list {
+            max-height: 250px;
+            overflow-y: auto;
+            text-align: left;
+            margin-top: 10px;
+        }
+        .device-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            border-bottom: 1px solid #f1f2f6;
+            cursor: pointer;
+            border-radius: 6px;
+            transition: background 0.2s;
+            font-size: 0.9rem;
+        }
+        .device-item:hover {
+            background: #f8f9fa;
+        }
+        .device-item:last-child {
+            border-bottom: none;
+        }
+        .device-item.active {
+            background: #ebf7ff;
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .device-status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            display: inline-block;
+        }
+        .device-status-dot.online { background: var(--success); box-shadow: 0 0 0 2px rgba(46, 204, 113, 0.2); }
+        .device-status-dot.offline { background: var(--text-muted); opacity: 0.5; }
+
+        /* Device Selection Trigger */
+        .device-trigger {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: #f8f9fa;
+            border: 1px solid #eee;
+            border-radius: 20px;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-size: 0.9rem;
+            color: #555;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+        .device-trigger:hover {
+            background: #fff;
+            border-color: var(--primary);
+            color: var(--primary);
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+        }
+        .device-trigger-icon {
+            width: 16px;
+            height: 16px;
+            fill: currentColor;
+            opacity: 0.7;
+        }
+    </style>
+</head>
+<body>
+
+
+
+    <div class="container">
+        <div class="portal-banner" id="portal-banner">
+            <div class="portal-banner-media" id="portal-banner-media"></div>
+            <div class="portal-status-pill disconnected" id="portal-status-pill">
+                <svg id="status-icon-connected" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 18c.55 0 1 .45 1 1s-.45 1-1 1-1-.45-1-1 .45-1 1-1zm-4.24-3.76a6 6 0 0 1 8.48 0l-1.41 1.41a4 4 0 0 0-5.66 0l-1.41-1.41zm-2.83-2.83a10 10 0 0 1 14.14 0l-1.41 1.41a8 8 0 0 0-11.32 0l-1.41-1.41z"/>
+                </svg>
+                <svg id="status-icon-disconnected" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm3.54 13.54-1.41 1.41L12 13.41l-2.12 2.12-1.41-1.41L10.59 12 8.46 9.88l1.41-1.41L12 10.59l2.12-2.12 1.41 1.41L13.41 12l2.13 2.12z"/>
+                </svg>
+                <svg id="status-icon-paused" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                    <path d="M12 2a10 10 0 1 0 0 20 10 10 0 0 0 0-20zm-3 6h2v8h-2zm4 0h2v8h-2z"/>
+                </svg>
+            </div>
+        </div>
+        <!-- Header -->
+        <div class="status-header">
+            <div class="status-text" id="status-text">Connected</div>
+        </div>
+
+        <!-- Main Display -->
+        <div class="main-display">
+            <div class="credit-label">Unclaimed Credit: <span id="coin-display">₱0.00</span></div>
+            <div class="info-row info-row-compact">
+                <span>IP: <span id="ip-display">...</span></span>
+                <span>MAC: <span id="mac-display">...</span></span>
+            </div>
+            
+            <div class="timer-label">Remaining Time:</div>
+            <div class="timer-value" id="time-display">00:00:00</div>
+            
+            <div class="code-display" style="display: none;">CODE: <span id="code-display">-</span></div>
+
+            <div id="free-time-widget" style="display:none; margin-top:10px; padding:8px 10px; border-radius:8px; background:#e8f7ff; border:1px solid #b3e5ff; font-size:0.85rem; color:#0277bd; flex-direction:column; align-items:center; gap:8px;">
+                <div id="free-time-text" style="font-weight:600;">Free time available</div>
+                <button class="btn btn-success" style="width:100%; max-width:200px; padding:6px; font-size:0.85rem; background:#0288d1; border:none;" onclick="claimFreeTime()">Claim Now</button>
+            </div>
+
+            <div id="vendo-selection-container" style="margin-top: 15px; text-align: center;">
+                <div style="font-size: 0.85rem; color: #666; display: none;">Vendo Mode: <span id="vendo-mode-label" style="font-weight:600;">-</span></div>
+                
+                <div id="vendo-device-container" style="margin-top: 10px;">
+                    <div class="device-trigger" onclick="openDeviceModal()">
+                        <svg class="device-trigger-icon" viewBox="0 0 24 24">
+                            <path d="M4 6h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" rx="2"/>
+                            <path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+                        </svg>
+                        <span id="selected-device-name">Main Vendo</span>
+                        <svg class="device-trigger-icon" style="width:12px; height:12px; margin-left:4px;" viewBox="0 0 24 24">
+                            <path d="M6 9l6 6 6-6" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                        </svg>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Buttons -->
+        <div class="actions">
+            <button class="btn btn-insert" id="btn-insert" onclick="startCoinMode()">Insert Coins</button>
+            <button class="btn btn-pause" id="btn-pause" onclick="togglePause()" style="display:none;">Pause Time</button>
+            <button class="btn btn-rates" onclick="showRates()">Wifi Rates</button>
+        </div>
+
+        <!-- Voucher Input (Inline) -->
+        <div class="voucher-section">
+            <input type="text" class="voucher-input" id="voucher-input-main" placeholder="Enter Voucher or Session Code...">
+            <button class="btn-submit" onclick="redeemVoucherMain()">Submit</button>
+        </div>
+        
+        <!-- Hidden elements for compatibility -->
+        <div style="display:none;" id="voucher-mac-display"></div>
+    </div>
+
+    <div class="developer-footer">DEVELOPER: CJTECH</div>
+
+    <!-- Device Selection Modal -->
+    <div id="device-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">Select Device</div>
+            <p style="font-size: 0.85rem; color: #666; margin-bottom: 15px;">Choose a vendo machine to insert coins.</p>
+            <div id="device-list" class="device-list">
+                <!-- Device items populated via JS -->
+            </div>
+            <button class="btn btn-rates" style="margin-top: 15px; background: #95a5a6;" onclick="closeDeviceModal()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Modals -->
+    
+    <!-- Coin Modal -->
+    <div id="coin-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title" id="coin-modal-title">Insert Coins Now</div>
+            <p id="coin-modal-desc" style="margin-bottom:15px; color:#666;">Please insert coins into the slot.</p>
+            <div style="font-size:2rem; font-weight:bold; color:var(--success); margin-bottom:20px;" id="modal-coin-amount">₱0.00</div>
+            <div style="font-size:1rem; font-weight:600; color:#333; margin-bottom:20px;" id="modal-coin-time">Equivalent Time: 0 Min</div>
+            <div class="coin-countdown">
+                <div class="coin-countdown-bar">
+                    <div class="coin-countdown-fill" id="coin-countdown-fill"></div>
+                </div>
+                <div class="coin-countdown-text" id="coin-countdown-text">Auto close in 60s</div>
+            </div>
+            <button class="btn btn-rates" onclick="closeCoinModal()">I'm Done</button>
+        </div>
+    </div>
+
+    <!-- Rates Modal -->
+    <div id="rates-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-title">WiFi Rates</div>
+            <div class="rate-list" id="rates-list">
+                <!-- Rates loaded here -->
+            </div>
+            <button class="btn btn-rates" style="margin-top:15px;" onclick="closeModal('rates-modal')">Close</button>
+        </div>
+    </div>
+
+    <audio id="coin-beep" src="/beed.mp3" preload="auto"></audio>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // State
+        const socket = io();
+        let currentUser = null;
+        let isInserting = false;
+        let coinAmount = 0;
+        let hasRedirected = false; // Prevent infinite redirect loops
+        let coinCountdownInterval = null;
+        let coinCountdownSeconds = 0;
+        let coinCountdownMaxSeconds = 60;
+        let coinBeepAudio = null;
+        let coinBeepContext = null;
+        let selectedVendoMode = 'auto';
+        let selectedVendoId = localStorage.getItem('vendo_target') || 'hardware';
+        let portalConfig = {};
+
+        // Device ID Management (Persistent Session)
+        function getOrCreateDeviceId() {
+            let deviceId = localStorage.getItem('device_id');
+            if (!deviceId) {
+                // Check cookies
+                const match = document.cookie.match(new RegExp('(^| )client_id=([^;]+)'));
+                if (match) {
+                    deviceId = match[2];
+                } else {
+                    // Generate new UUID
+                    deviceId = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                        var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                        return v.toString(16);
+                    });
+                }
+                localStorage.setItem('device_id', deviceId);
+            }
+            // Sync to cookie for server access
+            document.cookie = `client_id=${deviceId}; path=/; max-age=31536000`; // 1 year
+            return deviceId;
+        }
+
+        const deviceId = getOrCreateDeviceId();
+
+
+        function setPortalStatus(state) {
+            const pill = document.getElementById('portal-status-pill');
+            if (pill) pill.className = `portal-status-pill ${state}`;
+        }
+
+        async function loadPortalConfig() {
+            try {
+                const res = await fetch('/api/portal/config?t=' + Date.now());
+                const config = await res.json();
+                portalConfig = config;
+                
+                // Apply Styles
+                const root = document.documentElement;
+                if (config.container_max_width) {
+                    const container = document.querySelector('.container');
+                    if (container) container.style.maxWidth = `${config.container_max_width}px`;
+                }
+                
+                if (config.banner_height) {
+                    const banner = document.getElementById('portal-banner');
+                    if (banner) banner.style.height = `${config.banner_height}px`;
+                }
+
+                if (config.status_icon_container_size) {
+                    const pill = document.getElementById('portal-status-pill');
+                    if (pill) {
+                        pill.style.width = `${config.status_icon_container_size}px`;
+                        pill.style.height = `${config.status_icon_container_size}px`;
+                    }
+                }
+
+                if (config.icon_size) {
+                    const icons = document.querySelectorAll('.portal-status-pill svg');
+                    icons.forEach(icon => {
+                        icon.style.width = `${config.icon_size}px`;
+                        icon.style.height = `${config.icon_size}px`;
+                    });
+                }
+
+                // Hide Voucher Code
+                if (config.hide_voucher_code) {
+                    const codeDisplay = document.querySelector('.code-display');
+                    if (codeDisplay) codeDisplay.style.display = 'none';
+                }
+
+                // Init Banner with Version and Filename
+                const bannerFile = config.use_default_banner ? (config.default_banner_file || 'banner.png') : config.banner_filename;
+                initPortalBanner(config.banner_version, bannerFile);
+
+            } catch (e) {
+                console.error("Failed to load portal config", e);
+                initPortalBanner(Date.now(), 'banner.png'); // Fallback
+            }
+        }
+
+        function initPortalBanner(version, filename) {
+            const mediaEl = document.getElementById('portal-banner-media');
+            if (!mediaEl) return;
+
+            const file = filename || 'banner.png';
+            const stamp = version || Date.now();
+            
+            // Clear existing
+            mediaEl.innerHTML = '';
+
+            const el = document.createElement('img');
+            el.src = `${file}?v=${stamp}`;
+            el.alt = 'Portal banner';
+            el.classList.add('active');
+            mediaEl.appendChild(el);
+        }
+
+        function initCoinBeep() {
+            if (!coinBeepAudio) coinBeepAudio = document.getElementById('coin-beep');
+            if (coinBeepAudio) coinBeepAudio.volume = 0.5;
+            if (!coinBeepContext && window.AudioContext) coinBeepContext = new window.AudioContext();
+            if (coinBeepContext && coinBeepContext.state === 'suspended') {
+                coinBeepContext.resume().catch(() => {});
+            }
+            if (coinBeepAudio) {
+                try {
+                    const p = coinBeepAudio.play();
+                    if (p && p.then) {
+                        p.then(() => {
+                            coinBeepAudio.pause();
+                            coinBeepAudio.currentTime = 0;
+                        }).catch(() => {});
+                    } else {
+                        coinBeepAudio.pause();
+                        coinBeepAudio.currentTime = 0;
+                    }
+                } catch (e) {}
+            }
+        }
+
+        function playCoinBeepOsc() {
+            if (!coinBeepContext) return;
+            if (coinBeepContext.state === 'suspended') {
+                coinBeepContext.resume().catch(() => {});
+            }
+            const o = coinBeepContext.createOscillator();
+            const g = coinBeepContext.createGain();
+            g.gain.value = 0.05;
+            o.frequency.value = 880;
+            o.connect(g);
+            g.connect(coinBeepContext.destination);
+            o.start();
+            o.stop(coinBeepContext.currentTime + 0.06);
+        }
+
+        function playCoinBeep() {
+            if (!isInserting) return;
+            if (!coinBeepAudio) coinBeepAudio = document.getElementById('coin-beep');
+            if (coinBeepAudio) {
+                try {
+                    coinBeepAudio.currentTime = 0;
+                    const p = coinBeepAudio.play();
+                    if (p && p.catch) p.catch(() => playCoinBeepOsc());
+                } catch (e) {
+                    playCoinBeepOsc();
+                }
+                return;
+            }
+            playCoinBeepOsc();
+        }
+
+        function stopCoinCountdown() {
+            if (coinCountdownInterval) {
+                clearInterval(coinCountdownInterval);
+                coinCountdownInterval = null;
+            }
+        }
+
+        function renderCoinCountdown() {
+            const fill = document.getElementById('coin-countdown-fill');
+            const text = document.getElementById('coin-countdown-text');
+            const max = Math.max(1, Number(coinCountdownMaxSeconds) || 1);
+            const cur = Math.max(0, Number(coinCountdownSeconds) || 0);
+            const pct = Math.max(0, Math.min(100, (cur / max) * 100));
+
+            if (fill) fill.style.width = pct + '%';
+            if (text) text.textContent = `Auto close in ${cur}s`;
+        }
+
+        function startCoinCountdown(seconds, maxSeconds) {
+            stopCoinCountdown();
+            coinCountdownSeconds = Math.max(0, Number(seconds) || 0);
+            coinCountdownMaxSeconds = Math.max(1, Number(maxSeconds) || coinCountdownSeconds || 1);
+            renderCoinCountdown();
+            playCoinBeep();
+
+            coinCountdownInterval = setInterval(() => {
+                playCoinBeep();
+                coinCountdownSeconds = Math.max(0, (Number(coinCountdownSeconds) || 0) - 1);
+                renderCoinCountdown();
+                if (coinCountdownSeconds <= 0) {
+                    stopCoinCountdown();
+                    closeModal('coin-modal');
+                }
+            }, 1000);
+        }
+
+        // Toast Notification System
+        function showToast(message, type = 'info') {
+            let container = document.querySelector('.toast-container');
+            if (!container) {
+                container = document.createElement('div');
+                container.className = 'toast-container';
+                document.body.appendChild(container);
+            }
+
+            const toast = document.createElement('div');
+            toast.className = `toast ${type}`;
+            
+            let icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>'; // Info icon
+            
+            if (type === 'success') {
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>';
+            } else if (type === 'error') {
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="15" y1="9" x2="9" y2="15"></line><line x1="9" y1="9" x2="15" y2="15"></line></svg>';
+            } else if (type === 'warning') {
+                icon = '<svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>';
+            }
+
+            toast.innerHTML = `
+                <div class="toast-icon">${icon}</div>
+                <div class="toast-message">${message}</div>
+            `;
+
+            container.appendChild(toast);
+
+            // Auto remove
+            setTimeout(() => {
+                toast.classList.add('hiding');
+                toast.addEventListener('animationend', () => {
+                    toast.remove();
+                    if (container.children.length === 0) container.remove();
+                });
+            }, 3500);
+        }
+
+        // Init
+        document.addEventListener('DOMContentLoaded', async () => {
+            await loadPortalConfig();
+            updateStatus().then(() => {
+                // After initial status check, try auto-restore if needed
+                initAutoRestore();
+            });
+            fetchRates(); // Pre-load rates
+            setInterval(updateStatus, 1000);
+            
+            // Local timer
+            setInterval(() => {
+                if (currentUser && currentUser.time_remaining > 0 && !currentUser.is_paused) {
+                    currentUser.time_remaining--;
+                    updateTimer(currentUser.time_remaining);
+                } else if (currentUser && currentUser.time_remaining <= 0) {
+                    updateTimer(0);
+                }
+            }, 1000);
+        });
+
+        // Auto-Restore Logic (Cache Code & Endorse to New Connection)
+        function initAutoRestore() {
+            const cachedCode = localStorage.getItem('session_code');
+            if (!cachedCode) return;
+
+            // If we are disconnected or have no time, try to restore
+            if (!currentUser || currentUser.time_remaining <= 0) {
+                console.log('Attempting Auto-Restore with code:', cachedCode);
+                
+                // Visual feedback
+                const statusText = document.getElementById('status-text');
+                if (statusText) statusText.textContent = 'Restoring Session...';
+
+                fetch('/api/session/restore', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ code: cachedCode })
+                })
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success) {
+                        console.log('Auto-Restore Success');
+                        updateStatus(); // Refresh UI
+                    } else {
+                        console.warn('Auto-Restore Failed:', result.error);
+                        // If code is invalid, clear it so we don't loop forever
+                        if (result.error === 'Invalid Session Code') {
+                            localStorage.removeItem('session_code');
+                        }
+                    }
+                })
+                .catch(err => console.error('Auto-Restore Error:', err));
+            }
+        }
+
+        function formatMinutes(minutes) {
+            const m = Number(minutes) || 0;
+            if (m <= 0) return '0 Min';
+            if (m < 60) return `${m} Min`;
+            const h = Math.floor(m / 60);
+            const rem = m % 60;
+            if (h >= 24 && rem === 0) {
+                const d = Math.floor(h / 24);
+                return `${d} Day${d > 1 ? 's' : ''}`;
+            }
+            return `${h} Hr${h > 1 ? 's' : ''}${rem > 0 ? ' ' + rem + ' Min' : ''}`;
+        }
+        function formatHMSFromMinutes(minutes) {
+            const m = Number(minutes) || 0;
+            const totalSeconds = m * 60;
+            const h = Math.floor(totalSeconds / 3600);
+            const rem = totalSeconds % 3600;
+            const mm = Math.floor(rem / 60);
+            const ss = rem % 60;
+            const pad = (x) => String(x).padStart(2, '0');
+            return `${h}:${pad(mm)}:${pad(ss)}`;
+        }
+
+        socket.on('coin_pending_update', (data) => {
+            if (!isInserting || !currentUser || !currentUser.mac) return;
+            if ((currentUser.mac || '').toLowerCase() !== (data.mac || '').toLowerCase()) return;
+
+            coinAmount = Number(data.amount) || 0;
+            document.getElementById('modal-coin-amount').textContent = `₱${coinAmount.toFixed(2)}`;
+            document.getElementById('coin-display').textContent = `₱${coinAmount.toFixed(2)}`;
+            document.getElementById('modal-coin-time').textContent = `Equivalent Time: ${formatMinutes(data.minutes)}`;
+            startCoinCountdown(30, 30);
+        });
+
+        socket.on('user_code_generated', (data) => {
+            if (currentUser && currentUser.mac === data.mac) {
+                currentUser.session_code = data.code;
+                const codeSpan = document.getElementById('code-display');
+                if (codeSpan) codeSpan.textContent = data.code;
+                
+                // Also update visibility immediately to avoid waiting for next tick
+                const codeDisplayContainer = codeSpan ? codeSpan.parentElement : document.querySelector('.code-display');
+                if (codeDisplayContainer) {
+                    if (portalConfig.hide_voucher_code !== true) {
+                        codeDisplayContainer.style.display = 'block';
+                    } else {
+                        codeDisplayContainer.style.display = 'none';
+                    }
+                }
+            }
+        });
+
+        socket.on('coin_finalized', (data) => {
+            if (currentUser && currentUser.mac === data.mac) {
+                closeModal('coin-modal');
+                stopCoinCountdown();
+                updateStatus();
+            }
+        });
+
+        // Functions
+        // Device Modal Functions
+        function openDeviceModal() {
+            const modal = document.getElementById('device-modal');
+            modal.style.display = 'flex';
+            setTimeout(() => modal.classList.add('show'), 10);
+        }
+
+        function closeDeviceModal() {
+            const modal = document.getElementById('device-modal');
+            modal.classList.remove('show');
+            setTimeout(() => modal.style.display = 'none', 200);
+        }
+
+        function selectDevice(id, name) {
+            selectedVendoId = id;
+            localStorage.setItem('vendo_target', id);
+            
+            // Update UI trigger text
+            const nameEl = document.getElementById('selected-device-name');
+            if (nameEl) nameEl.textContent = name;
+            
+            // Re-render list to update active state
+            renderDeviceList(lastKnownDevices);
+            
+            closeDeviceModal();
+            showToast(`Selected: ${name}`, 'success');
+        }
+
+        let lastKnownDevices = [];
+
+        function renderDeviceList(devices) {
+            const listEl = document.getElementById('device-list');
+            if (!listEl) return;
+            
+            listEl.innerHTML = '';
+            lastKnownDevices = devices; // Cache for re-rendering
+
+            // Always add Hardware (Main Vendo) first
+            const hardwareItem = document.createElement('div');
+            hardwareItem.className = `device-item ${selectedVendoId === 'hardware' ? 'active' : ''}`;
+            hardwareItem.onclick = () => selectDevice('hardware', 'Main Vendo');
+            hardwareItem.innerHTML = `
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <svg style="width:18px; height:18px; fill:currentColor;" viewBox="0 0 24 24"><path d="M4 6h16v10H4z" fill="none" stroke="currentColor" stroke-width="2" rx="2"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                    <span>Main Vendo</span>
+                </div>
+                <span class="device-status-dot online"></span>
+            `;
+            listEl.appendChild(hardwareItem);
+
+            // Add other devices
+            if (devices && devices.length > 0) {
+                devices.forEach(d => {
+                    // Prevent duplicate Main Vendo if it exists in the list
+                    if (d.id === 'hardware') return;
+
+                    const isSelected = selectedVendoId === d.id;
+                    const item = document.createElement('div');
+                    item.className = `device-item ${isSelected ? 'active' : ''}`;
+                    item.onclick = () => selectDevice(d.id, d.name || d.id);
+                    
+                    const statusClass = d.status === 'online' ? 'online' : 'offline';
+                    
+                    item.innerHTML = `
+                        <div style="display:flex; align-items:center; gap:10px;">
+                             <svg style="width:18px; height:18px; fill:currentColor;" viewBox="0 0 24 24"><path d="M12 2a9 9 0 0 1 9 9c0 4.97-4.03 9-9 9s-9-4.03-9-9 9-4.03 9-9zm0 2c-3.87 0-7 3.13-7 7s3.13 7 7 7 7-3.13 7-7-3.13-7-7-7z" opacity="0.5"/><circle cx="12" cy="12" r="5"/></svg>
+                            <span>${d.name || d.id}</span>
+                        </div>
+                        <span class="device-status-dot ${statusClass}"></span>
+                    `;
+                    listEl.appendChild(item);
+                });
+            }
+        }
+
+        async function updateStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                currentUser = data;
+                const lastIp = localStorage.getItem('last_ip') || '';
+                const lastMac = localStorage.getItem('last_mac') || '';
+
+                // Cache Code for Auto-Restore
+                if (data.session_code) {
+                    localStorage.setItem('session_code', data.session_code);
+                }
+
+                const ipToShow = data.ip || lastIp || 'Unknown';
+                const macToShow = data.mac || lastMac || 'Unknown';
+                document.getElementById('ip-display').textContent = ipToShow;
+                document.getElementById('mac-display').textContent = macToShow;
+                if (data.ip) localStorage.setItem('last_ip', data.ip);
+                if (data.mac) localStorage.setItem('last_mac', data.mac);
+                
+                // Initialize Chat
+                const macForChat = data.mac || lastMac;
+                if (macForChat && window.initChatWithMac) {
+                    window.initChatWithMac(macForChat);
+                }
+
+                const codeSpan = document.getElementById('code-display');
+                const codeDisplayContainer = codeSpan ? codeSpan.parentElement : document.querySelector('.code-display');
+                
+                if (data.session_code && codeSpan) {
+                    codeSpan.textContent = data.session_code;
+                }
+
+                if (codeDisplayContainer) {
+                    // Only show if we have a code AND it is NOT hidden by config
+                    // We check explicit true for hide_voucher_code to be safe, but undefined/null/false means show
+                    if (data.session_code && portalConfig.hide_voucher_code !== true) {
+                        codeDisplayContainer.style.display = 'block';
+                    } else {
+                        codeDisplayContainer.style.display = 'none';
+                    }
+                }
+                
+                document.getElementById('coin-display').textContent = `₱${Number(data.pending_amount || 0).toFixed(2)}`;
+                const insertBtn = document.getElementById('btn-insert');
+                if (insertBtn) insertBtn.textContent = (Number(data.time_remaining) > 0) ? 'Extend Time' : 'Insert Coins';
+
+                // Pass MAC to hidden element for legacy compatibility if needed
+                const hiddenMac = document.getElementById('voucher-mac-display');
+                if (hiddenMac) hiddenMac.textContent = macToShow !== 'Unknown' ? macToShow : '';
+
+                const vendoModeLabel = document.getElementById('vendo-mode-label');
+                const deviceContainer = document.getElementById('vendo-device-container');
+
+                selectedVendoMode = (data.vendo_mode || 'auto').toLowerCase();
+                if (selectedVendoMode !== 'auto' && selectedVendoMode !== 'manual') selectedVendoMode = 'auto';
+
+                if (vendoModeLabel) {
+                    vendoModeLabel.textContent = selectedVendoMode === 'manual' ? 'Manual' : 'Automatic';
+                }
+
+                if (deviceContainer) deviceContainer.style.display = 'block';
+
+                const freeTimeWidget = document.getElementById('free-time-widget');
+                const freeTimeText = document.getElementById('free-time-text');
+                if (freeTimeWidget && freeTimeText) {
+                    const ft = data.free_time || null;
+                    if (ft && ft.widget_enabled && ft.minutes > 0 && ft.can_claim) {
+                        freeTimeWidget.style.display = 'flex';
+                        freeTimeText.textContent = `Free time available: ${formatHMSFromMinutes(ft.minutes)}`;
+                    } else {
+                        freeTimeWidget.style.display = 'none';
+                    }
+                }
+
+                // Update Device List
+                const available = Array.isArray(data.available_vendos) ? data.available_vendos : [];
+                
+                const mappedDevices = available.map(v => ({
+                    id: v.id,
+                    name: v.name,
+                    status: (v.is_online !== false) ? 'online' : 'offline'
+                }));
+                
+                renderDeviceList(mappedDevices);
+
+                // Update Trigger Text
+                let selectedName = 'Main Vendo';
+                if (selectedVendoId !== 'hardware') {
+                    const found = mappedDevices.find(d => d.id === selectedVendoId);
+                    if (found) {
+                        selectedName = found.name || found.id;
+                    } else {
+                        // If selected ID not found (e.g. disconnected), maybe keep showing ID or revert
+                        selectedName = selectedVendoId;
+                    }
+                }
+                const triggerNameEl = document.getElementById('selected-device-name');
+                if (triggerNameEl) triggerNameEl.textContent = selectedName;
+
+                if (data.time_remaining > 0) {
+                    updateTimer(data.time_remaining);
+                    const pauseBtn = document.getElementById('btn-pause');
+                    const statusText = document.getElementById('status-text');
+                    
+                    if (data.is_paused) {
+                        statusText.textContent = 'PAUSED';
+                        statusText.className = 'status-text paused';
+                        setPortalStatus('paused');
+                        pauseBtn.textContent = 'Resume Time';
+                        pauseBtn.style.background = 'var(--success)';
+                        hasRedirected = false; // Reset so we redirect again on resume
+                    } else if (data.is_connected) {
+                        statusText.textContent = 'Connected';
+                        statusText.className = 'status-text connected';
+                        setPortalStatus('connected');
+                        pauseBtn.textContent = 'Pause Time';
+                        pauseBtn.style.background = 'var(--danger)';
+                        
+                        // Auto-Redirect Logic
+                        // If we have time, are not paused, and haven't redirected yet (or just finished inserting coins)
+                        if (!hasRedirected && !isInserting) {
+                            attemptAutoRedirect();
+                        }
+                    } else {
+                        statusText.textContent = 'Disconnected';
+                        statusText.className = 'status-text disconnected';
+                        setPortalStatus('disconnected');
+                        pauseBtn.textContent = 'Pause Time';
+                        pauseBtn.style.background = 'var(--danger)';
+                        hasRedirected = false;
+                    }
+                    pauseBtn.style.display = 'block';
+                } else {
+                    updateTimer(0);
+                    const st = document.getElementById('status-text');
+                    if (st) {
+                        st.textContent = 'Disconnected';
+                        st.className = 'status-text disconnected';
+                    }
+                    setPortalStatus('disconnected');
+                    document.getElementById('btn-pause').style.display = 'none';
+                    hasRedirected = false; // Reset redirect flag when disconnected
+                }
+
+            } catch(e) { console.error(e); }
+        }
+
+        function attemptAutoRedirect() {
+            hasRedirected = true;
+            console.log('Attempting auto-redirect...');
+            
+            // Show a toast or message?
+            const statusText = document.getElementById('status-text');
+            statusText.textContent = 'Connected! Redirecting...';
+            statusText.className = 'status-text connected';
+            setPortalStatus('connected');
+            
+            // Delay slightly to let the user see the message, then redirect
+            setTimeout(() => {
+                // Try to break out of captive portal
+                // Android/iOS often close the portal if they hit a generate_204 URL successfully
+                window.location.href = 'http://connectivitycheck.gstatic.com/generate_204';
+            }, 1500);
+        }
+
+        function updateTimer(seconds) {
+            if (seconds < 0) seconds = 0;
+            const timeEl = document.getElementById('time-display');
+            if (seconds >= 86400) {
+                const d = Math.floor(seconds / 86400);
+                const rem = seconds % 86400;
+                const h = Math.floor(rem / 3600).toString().padStart(2, '0');
+                const m = Math.floor((rem % 3600) / 60).toString().padStart(2, '0');
+                const s = (rem % 60).toString().padStart(2, '0');
+                if (timeEl) {
+                    timeEl.classList.add('long');
+                    timeEl.textContent = `${d}d:${h}h:${m}m:${s}s`;
+                }
+                return;
+            }
+            if (timeEl) timeEl.classList.remove('long');
+            const h = Math.floor(seconds / 3600).toString().padStart(2, '0');
+            const m = Math.floor((seconds % 3600) / 60).toString().padStart(2, '0');
+            const s = (seconds % 60).toString().padStart(2, '0');
+            if (timeEl) timeEl.textContent = `${h}:${m}:${s}`;
+        }
+
+        function startCoinMode() {
+            // Check Server First!
+            fetch('/api/coin/start', { 
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ 
+                    deviceId,
+                    targetDeviceId: selectedVendoMode === 'manual' ? selectedVendoId : null
+                })
+            })
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                     isInserting = true;
+                     coinAmount = 0;
+                     initCoinBeep();
+                     const isExtend = !!(currentUser && Number(currentUser.time_remaining) > 0);
+                     const titleEl = document.getElementById('coin-modal-title');
+                     const descEl = document.getElementById('coin-modal-desc');
+                     if (titleEl) titleEl.textContent = isExtend ? 'Extend Time' : 'Insert Coins Now';
+                     if (descEl) descEl.textContent = isExtend ? 'Insert coins to extend your remaining time.' : 'Please insert coins into the slot.';
+                     document.getElementById('modal-coin-amount').textContent = '₱0.00';
+                     document.getElementById('modal-coin-time').textContent = 'Equivalent Time: 0 Min';
+                     document.getElementById('coin-display').textContent = `₱${Number((currentUser && currentUser.pending_amount) || 0).toFixed(2)}`;
+                     openModal('coin-modal');
+                     startCoinCountdown(60, 60);
+                } else {
+                     showToast(data.error || 'Failed to start coin session', 'error');
+                }
+            })
+            .catch(e => {
+                console.error(e);
+                showToast('Connection Error', 'error');
+            });
+        }
+
+        async function closeCoinModal() {
+            isInserting = false;
+            stopCoinCountdown();
+            try {
+                await fetch('/api/coin/done', { method: 'POST' });
+            } catch (e) {}
+            closeModal('coin-modal');
+            updateStatus();
+        }
+
+        async function togglePause() {
+            if (!currentUser) return;
+            const action = currentUser.is_paused ? 'resume' : 'pause';
+            try {
+                const ipEl = document.getElementById('ip-display');
+                const macEl = document.getElementById('mac-display');
+                const curIp = (ipEl && ipEl.textContent && ipEl.textContent !== 'Unknown' && ipEl.textContent !== '...') ? ipEl.textContent : '';
+                const curMac = (macEl && macEl.textContent && macEl.textContent !== 'Unknown' && macEl.textContent !== '...') ? macEl.textContent : '';
+                if (curIp) localStorage.setItem('last_ip', curIp);
+                if (curMac) localStorage.setItem('last_mac', curMac);
+            } catch (e) {}
+            try {
+                await fetch(`/api/session/${action}`, { method: 'POST' });
+                updateStatus();
+            } catch(e) {}
+        }
+
+        async function showRates() {
+            // Re-fetch rates just in case
+            await fetchRates(); 
+            openModal('rates-modal');
+        }
+
+
+
+        async function fetchRates() {
+            try {
+                let url = '/api/rates';
+                if (selectedVendoMode === 'manual' && selectedVendoId) {
+                    url += `?device=${encodeURIComponent(selectedVendoId)}`;
+                }
+                const res = await fetch(url);
+                const rates = await res.json();
+                const list = document.getElementById('rates-list');
+                
+                if (rates.length === 0) {
+                    list.innerHTML = '<div style="padding:10px;">No rates configured.</div>';
+                    return;
+                }
+
+                list.innerHTML = rates.map(r => {
+                    let d = r.minutes + ' Mins';
+                    if (r.minutes >= 60) {
+                        const h = Math.floor(r.minutes / 60);
+                        const m = r.minutes % 60;
+                        d = `${h} Hr${h>1?'s':''}${m>0 ? ' '+m+' Min' : ''}`;
+                    }
+                    const ul = r.upload_speed ? (r.upload_speed >= 1024 ? (r.upload_speed/1024).toFixed(1)+' Mbps' : r.upload_speed+' Kbps') : null;
+                    const dl = r.download_speed ? (r.download_speed >= 1024 ? (r.download_speed/1024).toFixed(1)+' Mbps' : r.download_speed+' Kbps') : null;
+                    const type = typeof r.is_pausable !== 'undefined' ? (r.is_pausable ? 'Pausable' : 'Continuous') : '';
+                    return `
+                        <div class="rate-item">
+                            <span class="rate-price">₱${r.amount}</span>
+                            <span class="rate-time">${d}</span>
+                            ${ul && dl ? `<span class="rate-speed">${ul} / ${dl}</span>` : ''}
+                            ${type ? `<span class="rate-type">${type}</span>` : ''}
+                        </div>
+                    `;
+                }).join('');
+            } catch(e) {}
+        }
+
+        async function redeemVoucherMain() {
+            const codeInput = document.getElementById('voucher-input-main');
+            const code = codeInput.value.trim();
+            const mac = document.getElementById('mac-display').textContent;
+
+            if (!code) return showToast('Please enter a voucher code', 'warning');
+
+            const btn = document.querySelector('.btn-submit');
+            const originalText = btn.textContent;
+            btn.textContent = '...';
+            btn.disabled = true;
+
+            try {
+                const res = await fetch('/api/voucher/redeem', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ 
+                        code, 
+                        mac: mac !== 'Unknown' && mac !== '...' ? mac : undefined 
+                    })
+                });
+                
+                const result = await res.json();
+                
+                if (result.success) {
+                    showToast('Success! Added Time.', 'success');
+                    codeInput.value = '';
+                    updateStatus();
+                } else {
+                    // Try Session Restore as fallback
+                    try {
+                        const loginRes = await fetch('/api/session/restore', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ code })
+                        });
+                        const loginResult = await loginRes.json();
+                        
+                        if (loginResult.success) {
+                             showToast('Session Resumed!', 'success');
+                             codeInput.value = '';
+                             updateStatus();
+                        } else {
+                             // Show original voucher error
+                             showToast('Error: ' + (result.error || 'Invalid voucher or code'), 'error');
+                        }
+                    } catch(e) {
+                         showToast('Error: ' + (result.error || 'Invalid voucher'), 'error');
+                    }
+                }
+            } catch (e) {
+                showToast('Connection failed.', 'error');
+            } finally {
+                btn.textContent = originalText;
+                btn.disabled = false;
+            }
+        }
+
+        async function claimFreeTime() {
+            const btn = document.querySelector('#free-time-widget button');
+            if (btn) btn.disabled = true;
+            
+            try {
+                // Pass mac from currentUser if available
+                const payload = {};
+                if (currentUser && currentUser.mac_address) payload.mac = currentUser.mac_address;
+
+                const res = await fetch('/api/claim-free-time', {
+                     method: 'POST',
+                     headers: { 'Content-Type': 'application/json' },
+                     body: JSON.stringify(payload)
+                });
+                const data = await res.json();
+                
+                if (data.success) {
+                    const hms = formatHMSFromMinutes(data.minutesAdded || 0);
+                    showToast(`Free time claimed! Added ${hms}.`, 'success');
+                    document.getElementById('free-time-widget').style.display = 'none';
+                    updateStatus();
+                } else {
+                    showToast(data.error || 'Failed to claim free time', 'error');
+                }
+            } catch (e) {
+                console.error(e);
+                showToast('Error claiming free time', 'error');
+            } finally {
+                if (btn) btn.disabled = false;
+            }
+        }
+
+        // Helpers
+        function openModal(id) {
+            const m = document.getElementById(id);
+            m.style.display = 'flex';
+            setTimeout(() => m.classList.add('show'), 10);
+        }
+
+        function closeModal(id) {
+            const m = document.getElementById(id);
+            m.classList.remove('show');
+            setTimeout(() => m.style.display = 'none', 200);
+            
+            if (id === 'coin-modal') {
+                isInserting = false;
+                stopCoinCountdown();
+            }
+        }
+
+        // Close outside click
+        window.onclick = function(e) {
+            if (e.target.classList.contains('modal')) {
+                closeModal(e.target.id);
+            }
+        }
+    </script>
+    <!-- Chat Widget -->
+    <div id="chat-widget-btn" class="chat-widget-btn" onclick="toggleChat()">
+        <div id="chat-unread-badge" class="chat-unread-badge"></div>
+        <svg viewBox="0 0 24 24"><path d="M20 2H4c-1.1 0-2 .9-2 2v18l4-4h14c1.1 0 2-.9 2-2V4c0-1.1-.9-2-2-2z"/></svg>
+    </div>
+
+    <div id="chat-widget-box" class="chat-widget-box">
+        <div class="chat-widget-header">
+            <span>Support Chat</span>
+            <span class="close-btn" onclick="toggleChat()">&times;</span>
+        </div>
+        <div id="chat-messages" class="chat-widget-messages">
+            <div style="text-align:center; color:#999; font-size:0.8rem; margin-top:20px;">Connecting...</div>
+        </div>
+        <div class="chat-widget-input">
+            <input type="text" id="chat-input" placeholder="Type a message..." disabled>
+            <button id="chat-send-btn" onclick="sendChatMessage()" disabled>→</button>
+        </div>
+    </div>
+
+    <script src="/socket.io/socket.io.js"></script>
+    <script>
+        // --- Chat Logic ---
+        let chatSocket = null;
+        let chatEnabled = false;
+        let chatMac = null; 
+        let isChatOpen = false;
+
+        function initChatWithMac(mac) {
+            const isNewMac = chatMac !== mac;
+            chatMac = mac;
+            
+            if (typeof io !== 'undefined' && !chatSocket) {
+                chatSocket = io();
+                
+                chatSocket.on('connect', () => {
+                    console.log('Chat Connected');
+                    chatSocket.emit('join_chat', { mac: chatMac });
+                });
+
+                chatSocket.on('chat_status', (data) => {
+                    chatEnabled = data.enabled;
+                    const btn = document.getElementById('chat-widget-btn');
+                    const box = document.getElementById('chat-widget-box');
+                    if (chatEnabled) {
+                        btn.style.display = 'flex';
+                        // Restore badge
+                        const stored = localStorage.getItem('chat_unread_count');
+                        if (stored && parseInt(stored) > 0) {
+                             const badge = document.getElementById('chat-unread-badge');
+                             badge.style.display = 'flex';
+                             badge.textContent = stored;
+                        }
+                    } else {
+                        btn.style.display = 'none';
+                        box.style.display = 'none';
+                        isChatOpen = false;
+                    }
+                });
+
+                chatSocket.on('chat_history', (messages) => {
+                    const container = document.getElementById('chat-messages');
+                    container.innerHTML = '';
+                    messages.forEach(msg => appendMessage(msg));
+                    scrollToBottom();
+                    enableInput();
+                });
+
+                chatSocket.on('new_message', (msg) => {
+                    appendMessage({
+                        message: msg.message,
+                        is_from_admin: msg.sender === 'admin',
+                        timestamp: msg.timestamp
+                    });
+                    
+                    if (msg.sender === 'admin') {
+                        if (!isChatOpen) {
+                            showUnreadBadge();
+                        }
+                    }
+                    scrollToBottom();
+                });
+            } else if (chatSocket && chatSocket.connected && isNewMac) {
+                // If mac changed (e.g. from Unknown to valid), join new room
+                chatSocket.emit('join_chat', { mac: chatMac });
+            }
+        }
+
+        function toggleChat() {
+            if (!chatEnabled) return;
+            const box = document.getElementById('chat-widget-box');
+            const badge = document.getElementById('chat-unread-badge');
+            
+            isChatOpen = !isChatOpen;
+            
+            if (isChatOpen) {
+                box.classList.add('open');
+                badge.style.display = 'none';
+                badge.textContent = '';
+                localStorage.setItem('chat_unread_count', '0');
+                scrollToBottom();
+                // Focus after animation
+                setTimeout(() => document.getElementById('chat-input').focus(), 300);
+            } else {
+                box.classList.remove('open');
+            }
+        }
+
+        function showUnreadBadge() {
+            const badge = document.getElementById('chat-unread-badge');
+            badge.style.display = 'flex';
+            const count = parseInt(badge.textContent || '0') + 1;
+            badge.textContent = count;
+            localStorage.setItem('chat_unread_count', count.toString());
+        }
+
+        function enableInput() {
+            document.getElementById('chat-input').disabled = false;
+            document.getElementById('chat-send-btn').disabled = false;
+        }
+
+        function appendMessage(msg) {
+            const container = document.getElementById('chat-messages');
+            // Remove placeholders
+            if (container.textContent.includes('Connecting...')) {
+                container.innerHTML = '';
+            }
+
+            const div = document.createElement('div');
+            const isMe = !msg.is_from_admin;
+            
+            div.className = `chat-msg ${isMe ? 'sent' : 'received'}`;
+            div.innerHTML = msg.message;
+            container.appendChild(div);
+        }
+
+        function scrollToBottom() {
+            const container = document.getElementById('chat-messages');
+            if (container) {
+                setTimeout(() => {
+                    container.scrollTop = container.scrollHeight;
+                }, 50);
+            }
+        }
+
+        function sendChatMessage() {
+            if (!chatSocket || !chatEnabled) return;
+            
+            const input = document.getElementById('chat-input');
+            const message = input.value.trim();
+            if (!message) return;
+            
+            chatSocket.emit('send_message', {
+                mac: chatMac,
+                message: message
+            });
+            
+            input.value = '';
+            input.focus();
+            setTimeout(() => input.focus(), 10);
+        }
+
+        document.getElementById('chat-input').addEventListener('keydown', function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                sendChatMessage();
+            }
+        });
+
+        // Prevent send button from stealing focus on mobile
+        const sendBtn = document.getElementById('chat-send-btn');
+        const handleSendClick = (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            sendChatMessage();
+        };
+        // Use mousedown for desktop/mouse
+        sendBtn.addEventListener('mousedown', handleSendClick);
+        // Use touchstart for mobile to trigger immediately and prevent focus loss
+        sendBtn.addEventListener('touchstart', handleSendClick, {passive: false});
+        
+        // Expose to window for updateStatus
+        window.initChatWithMac = initChatWithMac;
+    </script>
+</body>
+</html>

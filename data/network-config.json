@@ -1,0 +1,27 @@
+{
+  "wan": {
+    "interface": "eth0",
+    "mode": "dynamic",
+    "static": {
+      "ip": "",
+      "netmask": "255.255.255.0",
+      "gateway": "",
+      "dns1": "8.8.8.8",
+      "dns2": "8.8.4.4"
+    },
+    "pppoe": {
+      "username": "",
+      "password": ""
+    }
+  },
+  "vlans": [],
+  "bridges": [
+    {
+      "name": "br0",
+      "ip": "10.0.0.1",
+      "netmask": "255.255.255.0",
+      "stp": false,
+      "interfaces": []
+    }
+  ]
+}
