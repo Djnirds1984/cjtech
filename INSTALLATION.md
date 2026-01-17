@@ -4,6 +4,8 @@
 
 This guide provides comprehensive instructions for installing and setting up the Piso Wifi System, a Linux-based WiFi hotspot management system designed for single-board computers like Orange Pi and Raspberry Pi.
 
+**Repository**: [https://github.com/Djnirds1984/cjtech.git](https://github.com/Djnirds1984/cjtech.git)
+
 ## 1. Prerequisites
 
 ### System Requirements
@@ -53,7 +55,7 @@ This guide provides comprehensive instructions for installing and setting up the
 
 1. **Clone or download the project files** to your target device:
    ```bash
-   git clone <repository-url> linux_pisowifi
+   git clone https://github.com/Djnirds1984/cjtech.git linux_pisowifi
    cd linux_pisowifi
    ```
 
