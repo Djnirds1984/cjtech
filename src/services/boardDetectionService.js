@@ -204,17 +204,17 @@ class BoardDetectionService {
                 relay_pin_active: 'LOW'
             },
             'Raspberry Pi 3B': {
-                coin_pin: 2,       // GPIO2 (Physical pin 3) - SDA1 - Safe for RPi3
-                relay_pin: 27,     // GPIO27 (Physical pin 13) - Safe for RPi3
-                bill_pin: 17,      // GPIO17 (Physical pin 11) - Safe for RPi3
+                coin_pin: 12,      // GPIO12
+                relay_pin: 11,     // GPIO11
+                bill_pin: 19,      // GPIO19
                 coin_pin_edge: 'falling',
                 bill_pin_edge: 'falling',
                 relay_pin_active: 'LOW'
             },
             'Raspberry Pi 3B+': {
-                coin_pin: 2,       // GPIO2 (Physical pin 3) - SDA1 - Safe for RPi3
-                relay_pin: 27,     // GPIO27 (Physical pin 13) - Safe for RPi3
-                bill_pin: 17,      // GPIO17 (Physical pin 11) - Safe for RPi3
+                coin_pin: 12,      // GPIO12
+                relay_pin: 11,     // GPIO11
+                bill_pin: 19,      // GPIO19
                 coin_pin_edge: 'falling',
                 bill_pin_edge: 'falling',
                 relay_pin_active: 'LOW'
@@ -223,14 +223,6 @@ class BoardDetectionService {
                 coin_pin: 12,      // GPIO12
                 relay_pin: 11,     // GPIO11
                 bill_pin: 19,      // GPIO19
-                coin_pin_edge: 'falling',
-                bill_pin_edge: 'falling',
-                relay_pin_active: 'LOW'
-            },
-            'Raspberry Pi 3': {
-                coin_pin: 2,       // GPIO2 (Physical pin 3) - SDA1 - Safe for RPi3
-                relay_pin: 27,     // GPIO27 (Physical pin 13) - Safe for RPi3
-                bill_pin: 17,      // GPIO17 (Physical pin 11) - Safe for RPi3
                 coin_pin_edge: 'falling',
                 bill_pin_edge: 'falling',
                 relay_pin_active: 'LOW'

@@ -93,25 +93,6 @@ class CoinService extends EventEmitter {
         this.banLimit = parseInt(configService.get('ban_limit_counter', 10)); 
         this.banDuration = parseInt(configService.get('ban_duration', 1)); // minutes
 
-        // Raspberry Pi 3 GPIO Safety Check
-        const boardModel = boardDetectionService.getBoardModel();
-        if (boardModel && boardModel.includes('Raspberry Pi 3')) {
-            console.log('CoinService: Raspberry Pi 3 detected - Applying GPIO safety checks');
-            
-            // Validate GPIO pins for RPi3
-            const safeRPi3Pins = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27];
-            const systemRPi3Pins = [0, 1, 5, 6, 12, 13, 16, 19, 20, 21, 26];
-            
-            if (systemRPi3Pins.includes(pin)) {
-                console.warn(`CoinService: GPIO ${pin} is a system pin on RPi3 - switching to safe alternative`);
-                configService.set('coin_pin', 2); // Use GPIO2 (physical pin 3)
-            }
-            if (systemRPi3Pins.includes(billPin)) {
-                console.warn(`CoinService: GPIO ${billPin} is a system pin on RPi3 - switching to safe alternative`);
-                configService.set('bill_pin', 17); // Use GPIO17 (physical pin 11)
-            }
-        }
-
         console.log(`CoinService: Init Coin(GPIO${pin}, ${pinEdge}) | Bill(GPIO${billPin}, ${billPinEdge}, x${this.billMultiplier}) | Ban(Limit: ${this.banLimit}s, Duration: ${this.banDuration}m)`);
 
         // Cleanup Coin Object
