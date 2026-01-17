@@ -38,6 +38,7 @@ This guide provides comprehensive instructions for installing and setting up the
 - `ppp` - Point-to-Point Protocol
 - `pppoe` - PPP over Ethernet
 - `bridge-utils` - Ethernet bridge utilities
+- `wiringpi` - GPIO control library for Raspberry Pi (optional but recommended)
 
 #### Node.js Dependencies
 - `express` (^4.18.2) - Web framework
@@ -83,6 +84,20 @@ This guide provides comprehensive instructions for installing and setting up the
 2. **Install System Dependencies**:
    ```bash
    sudo apt install -y curl build-essential python3 iproute2 iptables dnsmasq git ppp pppoe bridge-utils
+   ```
+
+3. **Install WiringPi for Raspberry Pi GPIO Support** (Optional but Recommended):
+   ```bash
+   # Try apt installation first (newer Raspberry Pi OS)
+   sudo apt install -y wiringpi
+   
+   # If apt installation fails, install from source:
+   cd /tmp
+   git clone https://github.com/WiringPi/WiringPi.git
+   cd WiringPi
+   ./build
+   cd -
+   rm -rf /tmp/WiringPi
    ```
 
 3. **Install Node.js 18.x**:
@@ -284,6 +299,27 @@ npm install
 **Solution 2** (Force single-threaded):
 ```bash
 npm install --jobs=1
+```
+
+#### Error: "WiringPi not found" or GPIO Library Issues
+
+**Cause**: Missing WiringPi library for Raspberry Pi GPIO control
+
+**Solution**:
+```bash
+# Install WiringPi for Raspberry Pi
+sudo apt install -y wiringpi
+
+# If apt installation fails, install from source:
+cd /tmp
+git clone https://github.com/WiringPi/WiringPi.git
+cd WiringPi
+./build
+cd -
+rm -rf /tmp/WiringPi
+
+# Verify installation
+gpio -v
 ```
 
 #### Error: "Permission Denied" or "EACCES"

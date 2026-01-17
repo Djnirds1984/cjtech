@@ -13,6 +13,32 @@ apt-get update
 echo "🛠 Installing System Utilities..."
 apt-get install -y curl build-essential python3 iproute2 iptables dnsmasq git ppp pppoe bridge-utils
 
+# Install WiringPi for Raspberry Pi GPIO support
+echo "🔌 Installing WiringPi for Raspberry Pi GPIO support..."
+if command -v gpio >/dev/null 2>&1; then
+    echo "✅ WiringPi already installed"
+else
+    echo "📦 Installing WiringPi..."
+    # Method 1: Try apt installation first (newer Raspberry Pi OS)
+    apt-get install -y wiringpi || {
+        echo "⚠️  apt wiringpi not available, trying manual installation..."
+        # Method 2: Manual installation from source
+        cd /tmp
+        git clone https://github.com/WiringPi/WiringPi.git || {
+            echo "❌ Failed to clone WiringPi repository"
+            echo "ℹ️  You may need to install WiringPi manually for full GPIO support"
+            cd - > /dev/null
+        }
+        cd WiringPi
+        ./build || {
+            echo "❌ WiringPi build failed"
+            echo "ℹ️  GPIO functionality may be limited"
+        }
+        cd - > /dev/null
+        rm -rf /tmp/WiringPi
+    }
+fi
+
 # 3. Install Node.js (v18)
 if ! command -v node &> /dev/null || ! command -v npm &> /dev/null; then
     echo "🟢 Installing Node.js v18 & npm..."
