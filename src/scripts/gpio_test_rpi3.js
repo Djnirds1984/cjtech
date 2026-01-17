@@ -1,4 +1,5 @@
 const { Gpio } = require('onoff');
+const fs = require('fs');
 
 // Raspberry Pi 3 Safe GPIO Pins
 const SAFE_GPIO_PINS = [2, 3, 4, 7, 8, 9, 10, 11, 14, 15, 17, 18, 22, 23, 24, 25, 27];
